@@ -11,6 +11,8 @@ const EventSchema = z.object({
   mapData: z.object({
     longitude: z.number(),
     latitude: z.number(),
+    longitudeDelta: z.number(),
+    latitudeDelta: z.number(),
   }),
   photos: z.array(z.string().url()),
   price: z.number().nonnegative(),
@@ -23,7 +25,7 @@ const defaultValues: EventFormType = {
   description: '',
   eventCreatedById: '',
   location: { longitude: 0, latitude: 0 },
-  mapData: { longitude: 0, latitude: 0 },
+  mapData: { longitude: 0, latitude: 0, longitudeDelta: 0, latitudeDelta: 0 },
   photos: [],
   price: 0,
   title: '',

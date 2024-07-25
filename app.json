@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Socila Butterfly",
+    "name": "Social Butterfly",
     "slug": "socialButterfly",
     "version": "1.0.0",
     "scheme": "socialButterfly",
@@ -10,7 +10,11 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-location",
+      {
+        "locationAlwaysAndWhenInUsePermission": "Allow Social Butterfly to use your location."
+      }
     ],
     "experiments": {
       "typedRoutes": true,
@@ -28,12 +32,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tevinmfalme.socialButterfly"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#cb7d67"
+      },
+      "package": "com.tevinmfalme.socialButterfly"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "65825196-0f8a-4a1f-bee9-b1eb5d26f863"
       }
     }
   }

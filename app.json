@@ -10,11 +10,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-location",
-      {
-        "locationAlwaysAndWhenInUsePermission": "Allow Social Butterfly to use your location."
-      }
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true,

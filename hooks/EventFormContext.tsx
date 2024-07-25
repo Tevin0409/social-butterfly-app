@@ -7,6 +7,7 @@ const EventSchema = z.object({
   location: z.object({
     longitude: z.number(),
     latitude: z.number(),
+    name: z.string().optional(),
   }),
   mapData: z.object({
     longitude: z.number(),
@@ -24,7 +25,7 @@ type EventFormType = z.infer<typeof EventSchema>;
 const defaultValues: EventFormType = {
   description: '',
   eventCreatedById: '',
-  location: { longitude: 0, latitude: 0 },
+  location: { longitude: 0, latitude: 0, name: '' },
   mapData: { longitude: 0, latitude: 0, longitudeDelta: 0, latitudeDelta: 0 },
   photos: [],
   price: 0,

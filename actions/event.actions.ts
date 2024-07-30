@@ -37,18 +37,19 @@ export const createEvent = async (
   return response.json();
 };
 
-export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
-    method: 'POST',
+export const fetchAllEvents = async (): Promise<SocialEvent[]> => {
+  console.log('fetchAllEvents', BASE_URL);
+  const response = await fetch(`${BASE_URL}/events/fetch-events`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password }),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    if (error.errorCode === 3001) {
+    console.log('error', error);
+    if (error.errorCode) {
       throw error;
     }
     if (error.errorCode && error.errorCode !== 3001) {

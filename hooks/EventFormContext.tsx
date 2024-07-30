@@ -15,7 +15,12 @@ const EventSchema = z.object({
     longitudeDelta: z.number(),
     latitudeDelta: z.number(),
   }),
-  photos: z.array(z.string().url()),
+  photos: z.array(
+    z.object({
+      url: z.string().url(),
+      name: z.string(),
+    })
+  ),
   price: z.number().nonnegative(),
   title: z.string(),
 });

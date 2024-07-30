@@ -1,4 +1,4 @@
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://192.168.1.3:5000/api';
 
 interface AuthResponse {
   message: string;
@@ -6,21 +6,23 @@ interface AuthResponse {
   token: string;
 }
 
-export const signup = async (
-  user: User,
-  password: string
+export const createEvent = async (
+  event: SocialEvent,
+  token: string
 ): Promise<AuthResponse | ErrorResponse> => {
-  const response = await fetch(`${BASE_URL}/auth/signup`, {
+  console.log('event', BASE_URL);
+  const response = await fetch(`${BASE_URL}/events/create-event`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `${token}`,
     },
-    body: JSON.stringify({ ...user, password }),
+    body: JSON.stringify(event),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    if (error.errorCode === 3001) {
+    if (error.errorCode) {
       throw error;
     }
     if (error.errorCode && error.errorCode !== 3001) {

@@ -65,9 +65,11 @@ const Step2 = () => {
     }
   };
   return (
-    <View className="flex flex-1 p-4">
-      <Container>
-        <Text className="mb-4 text-lg">Tell us where your event is happening</Text>
+    <Container>
+      <View className="h-full flex-col justify-center gap-4 px-6 pt-14">
+        <Text className=" text-xl font-semibold text-primary">
+          Tell us where your event is happening...
+        </Text>
         <GooglePlacesAutocomplete
           placeholder="Search for a place"
           fetchDetails={true}
@@ -87,7 +89,8 @@ const Step2 = () => {
               zIndex: 1,
               width: '100%',
               position: 'absolute',
-              top: 40,
+              top: 83,
+              left: 21,
             },
           }}
         />
@@ -96,7 +99,7 @@ const Step2 = () => {
             ref={mapRef}
             style={{
               width: '100%',
-              height: '100%',
+              height: '90%',
             }}
             initialRegion={{
               // latitude: -1.301,
@@ -118,10 +121,10 @@ const Step2 = () => {
               title={data.location.name || 'Marker'}
             />
           </MapView>
+          <Button title="Next" onPress={() => router.push('step3')} />
         </View>
-        <Button title="Next" onPress={() => router.push('step3')} />
-      </Container>
-    </View>
+      </View>
+    </Container>
   );
 };
 

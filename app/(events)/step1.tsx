@@ -1,24 +1,41 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Button } from '~/components/Button';
 import { Container } from '~/components/Container';
 import Input from '~/components/TextInput';
 import { useEventForm } from '~/hooks/EventFormContext';
+import { useAuthStore } from '~/store/auth-store';
+import { colors } from '~/theme/colors';
 
 const Step1 = () => {
   const { data, setData } = useEventForm();
   const router = useRouter();
+  const { user } = useAuthStore();
 
   return (
+    // <LinearGradient style={{ flex: 1 }} colors={[colors.primaryBg, colors.secondary]}>
     <Container>
-      {/* TODO: Add a picture */}
       <View className="h-full flex-col justify-center gap-4 px-6">
-        <Text className="mb-4 text-lg">Tell us more about your event</Text>
+        <View className="mb-4 flex-row items-center justify-center rounded-full  py-4">
+          <Image
+            source={require('~/assets/images/step-1-hero.png')}
+            style={{
+              width: 140,
+              height: 210,
+              alignSelf: 'center',
+            }}
+          />
+        </View>
+
+        <Text className="mb-4 text-2xl font-semibold text-primary">
+          Tell us more about your event ...
+        </Text>
         <Input
           label="Event Title"
           value={data.title}
-          onChangeText={(text) => setData({ ...data, title: text })}
+          onChangeText={(text) => setData({ ...data, title: text, eventCreatedById: user?.id! })}
           placeholder="Enter the title of your event"
           // errorMessage={errors.email}
           // onClearError={() => clearError('email')}
@@ -45,6 +62,7 @@ const Step1 = () => {
         <Button title="Next" onPress={() => router.push('step2')} />
       </View>
     </Container>
+    // </LinearGradient>
   );
 };
 

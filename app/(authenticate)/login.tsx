@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, KeyboardAvoidingView, Pressable } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Pressable, Image } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -57,6 +57,16 @@ const Login = () => {
   return (
     <SafeAreaView className="flex-1">
       <StatusBar style="inverted" />
+      <View className="mb-4 flex-row items-center justify-center rounded-full  py-4">
+        <Image
+          source={require('~/assets/images/login-hero.gif')}
+          style={{
+            width: 140,
+            height: 210,
+            alignSelf: 'center',
+          }}
+        />
+      </View>
       <View className="my-1">
         <Pressable onPress={() => router.push('/')}>
           <AntDesign name="arrowleft" size={24} color="black" />

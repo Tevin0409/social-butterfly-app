@@ -39,19 +39,21 @@ export default function RootLayout() {
     }
   }, [loaded, user]);
   return (
-    <RootSiblingParent>
-      <Stack initialRouteName="index">
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(authenticate)" options={{ headerShown: false }} />
-        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-        <Stack.Screen name="(events)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ title: 'Modal', presentation: 'modal' }} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <RootSiblingParent>
+        <Stack initialRouteName="index">
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(authenticate)" options={{ headerShown: false }} />
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+          <Stack.Screen name="(events)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ title: 'Modal', presentation: 'modal' }} />
 
-        <Stack.Screen
-          name="create_event"
-          options={{ title: 'Create Event', presentation: 'modal' }}
-        />
-      </Stack>
-    </RootSiblingParent>
+          <Stack.Screen
+            name="create_event"
+            options={{ title: 'Create Event', presentation: 'modal' }}
+          />
+        </Stack>
+      </RootSiblingParent>
+    </GestureHandlerRootView>
   );
 }

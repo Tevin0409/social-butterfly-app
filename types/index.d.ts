@@ -34,3 +34,30 @@ declare type AuthResponse = {
   userInfo: User;
   token: string;
 };
+
+declare type Photo = {
+  url: string;
+  name: string;
+};
+
+declare type SocialEvent = {
+  title: string;
+  description: string;
+  price: number;
+  location: {
+    name?: string;
+    longitude: number;
+    latitude: number;
+  };
+  mapData: {
+    longitude: number;
+    latitude: number;
+    longitudeDelta: number;
+    latitudeDelta: number;
+  };
+  photos: Photo[];
+  eventCreatedById?: string;
+  id?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+};

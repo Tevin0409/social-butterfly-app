@@ -21,6 +21,7 @@ const EventSchema = z.object({
       name: z.string(),
     })
   ),
+  categories: z.array(z.string()),
   price: z.number().nonnegative(),
   title: z.string(),
 });
@@ -35,6 +36,7 @@ const defaultValues: EventFormType = {
   photos: [],
   price: 0,
   title: '',
+  categories: [],
 };
 
 type EventFormContextType = {

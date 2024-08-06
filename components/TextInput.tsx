@@ -40,26 +40,10 @@ export default function Input({ label, errorMessage, right, onClearError, ...pro
 const styles = {
   error: ` text-red-500 mt-2 font-normal`,
   errorBorder: 'border-2 border-error',
-  inputBox:
-    'w-full h-14 items-center justify-center pl-3  flex-row border-1 border-[#A1A5AC] rounded-md',
+  inputBox: ' h-14 items-center justify-center pl-3  flex-row border-1 border-[#A1A5AC] rounded-md',
   input: 'w-full font-normal',
   label: 'my-1.5 font-normal text-base',
-  icon: 'justify-center items-center p-5',
+  icon: 'justify-center items-center absolute right-3',
   button: 'items-center bg-primary rounded-md shadow-md p-4',
   buttonText: 'text-white text-lg font-semibold text-center',
 };
-// const style = StyleSheet.create({
-
-// //   input: {
-//    // color: '#1A1A1A',
-// //   },
-// //   label: {
-// //     fontWeight: '400',
-// //     marginBottom: '2%',
-// //   },
-//   icon: {
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     padding: '5%',
-//   },
-// });

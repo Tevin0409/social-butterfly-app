@@ -1,21 +1,24 @@
-import { View, Text, ScrollView, KeyboardAvoidingView, Pressable, Image } from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Input from '~/components/TextInput';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { Button } from '~/components/Button';
 import { useRouter } from 'expo-router';
 
 import { login as loginUser } from '../../actions/user.actions';
 import Toast from 'react-native-root-toast';
 import { useAuthStore } from '~/store/auth-store';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { colors } from '~/theme/colors';
 
 const Login = () => {
   const router = useRouter();
   const setUser = useAuthStore((state) => state.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<'email' | 'password', string>>>({});
 
   const clearError = (field: 'email' | 'password') => {
@@ -29,7 +32,7 @@ const Login = () => {
       Toast.show(res.message);
 
       setUser((res as AuthResponse).userInfo, (res as AuthResponse).token);
-      router.replace('/home');
+      router.replace('/(tabs)');
     } catch (error) {
       Toast.show('Login Failed');
       console.log('error', error);
@@ -55,26 +58,36 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1">
-      <StatusBar style="inverted" />
-      <View className="mb-4 flex-row items-center justify-center rounded-full  py-4">
-        <Image
-          source={require('~/assets/images/login-hero.gif')}
-          style={{
-            width: 140,
-            height: 210,
-            alignSelf: 'center',
-          }}
-        />
-      </View>
-      <View className="my-1">
-        <Pressable onPress={() => router.push('/')}>
-          <AntDesign name="arrowleft" size={24} color="black" />
-        </Pressable>
-        <Text className="mx-2 text-xl font-bold">Login</Text>
-      </View>
-      <View className="mx-2  flex-col  ">
-        <KeyboardAvoidingView behavior={'position'} className=" items-center justify-center  px-2">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+      }}>
+      <StatusBar style="auto" />
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        style={{
+          width: '100%',
+        }}>
+        <View className="w-full py-4">
+          <Image
+            source={require('~/assets/images/signin-hero.png')}
+            style={{
+              width: 240,
+              height: 264,
+              alignSelf: 'center',
+            }}
+          />
+        </View>
+
+        <View className="mx-2  w-full flex-col px-4  ">
           <Input
             label="Email Address"
             value={email}
@@ -87,16 +100,27 @@ const Login = () => {
             label="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={showPassword}
             placeholder="Enter your password"
             errorMessage={errors.password}
             onClearError={() => clearError('password')}
+            right={() => (
+              <View className="items-center justify-center p-5">
+                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                  {showPassword ? (
+                    <FontAwesome name="eye-slash" size={20} color={colors.primary} />
+                  ) : (
+                    <AntDesign name="eye" size={20} color={colors.primary} />
+                  )}
+                </Pressable>
+              </View>
+            )}
           />
           <View className="my-2 py-2">
             <Button title="Login" onPress={handleLogin} />
           </View>
-        </KeyboardAvoidingView>
-      </View>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };

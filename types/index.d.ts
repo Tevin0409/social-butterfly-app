@@ -58,6 +58,25 @@ declare type SocialEvent = {
   photos: Photo[];
   eventCreatedById?: string;
   id?: string;
+  categories: string[];
   createdAt?: string | Date;
   updatedAt?: string | Date;
+};
+
+declare type Booking = {
+  id: string;
+  eventId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  user: User;
+};
+declare type EventInfo = {
+  bookings: Booking[];
+  eventInfo: SocialEvent;
+  ownerInfo: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
 };

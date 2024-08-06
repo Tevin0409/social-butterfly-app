@@ -19,7 +19,7 @@ export default function RootLayout() {
           options={{
             title: 'Event Details',
             headerLeft: () => (
-              <Pressable onPress={() => router.push('(drawer)')}>
+              <Pressable onPress={() => router.push('(tabs)')}>
                 <Text style={{ fontSize: 18, textAlign: 'center', color: colors.primary }}>
                   Back
                 </Text>

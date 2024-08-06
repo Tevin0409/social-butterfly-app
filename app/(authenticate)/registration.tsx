@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, KeyboardAvoidingView, Pressable } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Pressable, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { signup as signupUser } from '../../actions/user.actions';
 import Toast from 'react-native-root-toast';
 import { useAuthStore } from '~/store/auth-store';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const Register = () => {
   const router = useRouter();
@@ -74,16 +75,25 @@ const Register = () => {
   };
 
   return (
-    <SafeAreaView className=" flex-1 ">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+      }}>
       <StatusBar style="inverted" />
-      <View className="my-1 ">
-        <Pressable onPress={() => router.push('/')}>
-          <AntDesign name="arrowleft" size={24} color="black" />
-        </Pressable>
-        <Text className=" mx-2 text-xl font-bold">Create Account</Text>
-      </View>
-      <ScrollView className=" mx-2  " contentContainerStyle={{ paddingBottom: 10 }}>
-        <KeyboardAvoidingView behavior={'padding'} className="px-2">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          flex: 1,
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          marginTop: 20,
+          width: '100%',
+        }}
+        style={{ width: '100%' }}>
+        <View className="w-full py-4">
           <Input
             label="First Name"
             value={firstName}
@@ -152,8 +162,8 @@ const Register = () => {
           <View className="my-2 py-2">
             <Button title="Register" onPress={handleSignup} />
           </View>
-        </KeyboardAvoidingView>
-      </ScrollView>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };

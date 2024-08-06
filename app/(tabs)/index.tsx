@@ -1,9 +1,11 @@
 import { Stack, useRouter } from 'expo-router';
 import React, { useRef, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -14,11 +16,16 @@ import { Cloudinary } from '@cloudinary/url-gen';
 import { upload } from 'cloudinary-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 import { Container } from '~/components/Container';
-import { createEvent, fetchAllEvents } from '~/actions/event.actions';
+import {
+  createEvent,
+  fetchAllEvents,
+  fetchAllCategories,
+  fetchEventsByCategory,
+} from '~/actions/event.actions';
 import { styles } from '~/components/HeaderButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import Input from '~/components/TextInput';
@@ -28,15 +35,66 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { colors } from '~/theme/colors';
 import Toast from 'react-native-root-toast';
 import { Button } from '~/components/Button';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Home() {
   const router = useRouter();
   const { data, setData } = useEventForm();
   const { user, token } = useAuthStore();
   const [events, setEvents] = useState<SocialEvent[]>([]);
-
+  const [event_categories, set_event_categories] = useState<Category[]>([]);
   const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const {
+    data: categories,
+    error: categoryError,
+    isLoading: categoryIsLoading,
+    refetch: refetchCategories,
+  } = useQuery({
+    queryKey: ['fetch-categories'],
+    queryFn: () => fetchAllCategories(),
+    enabled: true,
+  });
+
+  // const {
+  //   data: eventsByCategory,
+  //   error: eventsByCategoryError,
+  //   isLoading: eventsByCategoryIsLoading,
+  //   refetch: refetchEventsByCategory,
+  // } = useQuery({
+  //   queryKey: ['fetch-events-by-category'],
+  //   queryFn: ({ category }) => fetchEventsByCategory(category),
+  //   enabled: true,
+  // });
+
+  const {
+    data: dt,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['fetch-events-by-category', selectedCategory],
+    queryFn: () => fetchEventsByCategory(selectedCategory),
+    enabled: true,
+  });
+
+  const {
+    data: dt2,
+    error: error2,
+    isLoading: isLoading2,
+    refetch: refetch2,
+  } = useQuery({
+    queryKey: ['fetch-events'],
+    queryFn: () => fetchAllEvents(),
+    enabled: true,
+  });
+
+  console.log('dt', dt);
 
   const handleLogout = async () => {
     await AsyncStorage.clear();
@@ -157,117 +215,273 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const response = await fetchAllEvents();
-      console.log('response', response);
-      setEvents(response);
-    };
-    fetchEvents();
-  }, []);
-  if (events.length === 0 || events === undefined) {
+    if (categories) {
+      set_event_categories(categories);
+    } else {
+      set_event_categories([]);
+      refetchCategories();
+    }
+  }, [categories]);
+
+  // if (dt === undefined || dt.length === 0) {
+  //   return (
+  //     <>
+  //       <Stack.Screen options={{ title: 'Events' }} />
+  //       <Container>
+  //         {/* <View className="h-full flex-col justify-between gap-4 px-6 pb-3 pt-14">
+  //           <Text>You have no Events</Text>
+  //           <TouchableOpacity
+  //             className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
+  //             // style={styles.floatingButton}
+  //             onPress={() => {
+  //               router.push('/step1');
+  //             }}>
+  //             <Ionicons name="add" size={24} color="white" />
+  //           </TouchableOpacity>
+  //         </View> */}
+  //         <BottomSheet
+  //           ref={bottomSheetRef}
+  //           index={open ? 1 : -1}
+  //           snapPoints={[200, '50%', '90%']}
+  //           enablePanDownToClose={true}
+  //           onChange={handleSheetChange}>
+  //           <BottomSheetView style={{ paddingHorizontal: 15 }}>
+  //             <Text className=" text-center text-xl font-semibold text-primary">
+  //               Create A New Event
+  //             </Text>
+  //             <Text
+  //               className={` my-1.5 text-base font-normal`}
+  //               style={{
+  //                 color: '#1A1A1A',
+  //               }}>
+  //               Event Location
+  //               <Text style={{ color: colors.error }}>*</Text>
+  //             </Text>
+
+  //             <GooglePlacesAutocomplete
+  //               placeholder="Search for a place"
+  //               fetchDetails={true}
+  //               onPress={(data, details = null) => {
+  //                 if (details) {
+  //                   onPlaceSelected(details);
+  //                 }
+  //               }}
+  //               query={{
+  //                 key: 'AIzaSyDu1dCOYnqv0rYLW23fxYwyuupnMxvga-M',
+  //                 language: 'en',
+  //               }}
+  //               styles={{
+  //                 listView: { backgroundColor: 'white' },
+  //                 textInput: { color: 'black' },
+  //                 textInputContainer: {
+  //                   paddingLeft: 10,
+  //                   borderRadius: 10,
+  //                   borderWidth: 1.5,
+  //                   borderColor: '#A1A5AC',
+  //                   backgroundColor: 'white',
+  //                 },
+  //                 container: {
+  //                   width: '100%',
+  //                   flex: 0,
+  //                 },
+  //               }}
+  //             />
+  //           </BottomSheetView>
+  //           <BottomSheetScrollView
+  //             contentContainerStyle={{
+  //               paddingHorizontal: 15,
+  //             }}>
+  //             <KeyboardAvoidingView behavior={'padding'} className="flex flex-1 flex-col ">
+  //               <Text
+  //                 className={`  text-base font-normal`}
+  //                 style={{
+  //                   color: '#1A1A1A',
+  //                 }}>
+  //                 Please upload an image as your event theme ...
+  //                 <Text style={{ color: colors.error }}>*</Text>
+  //               </Text>
+  //               <Pressable onPress={pickImage}>
+  //                 <Image
+  //                   source={{
+  //                     uri:
+  //                       data.photos[0]?.url ||
+  //                       'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
+  //                   }}
+  //                   className=" aspect-video   rounded-lg"
+  //                   style={{
+  //                     width: 300,
+  //                     height: 200,
+  //                     borderRadius: 12,
+  //                   }}
+  //                 />
+  //               </Pressable>
+  //               <Input
+  //                 label="Event Title"
+  //                 value={data.title}
+  //                 onChangeText={(text) => setData({ ...data, title: text })}
+  //                 placeholder="Enter the title of your event"
+  //                 // errorMessage={errors.email}
+  //                 // onClearError={() => clearError('email')}
+  //               />
+  //               <Input
+  //                 label="Event Description"
+  //                 value={data.description}
+  //                 onChangeText={(text) => setData({ ...data, description: text })}
+  //                 placeholder="Enter the details about your event"
+  //                 // errorMessage={errors.email}
+  //                 // onClearError={() => clearError('email')}
+  //               />
+  //               <Input
+  //                 label="Event Category"
+  //                 value={data.categories ? data.categories[0] : ''}
+  //                 onChangeText={(text) => setData({ ...data, categories: [text] })}
+  //                 placeholder="Enter the categories of your event"
+  //                 // errorMessage={errors.email}
+  //                 // onClearError={() => clearError('email')}
+  //               />
+
+  //               <Input
+  //                 label="Event Price"
+  //                 value={Number(data.price).toString()}
+  //                 onChangeText={(text) =>
+  //                   setData({ ...data, price: !isNaN(parseFloat(text)) ? parseFloat(text) : 0 })
+  //                 }
+  //                 keyboardType="numeric"
+  //                 placeholder="Enter the price of your event"
+  //               />
+  //               <Button title="Submit" className="mt-4" onPress={handleCreateEvent} />
+  //             </KeyboardAvoidingView>
+  //           </BottomSheetScrollView>
+  //         </BottomSheet>
+  //       </Container>
+  //     </>
+  //   );
+  // }
+  if (dt2 && dt === undefined) {
     return (
-      <>
-        <Stack.Screen options={{ title: 'Events' }} />
-        <Container>
-          {/* <View className="h-full flex-col justify-between gap-4 px-6 pb-3 pt-14">
-            <Text>You have no Events</Text>
-            <TouchableOpacity
-              className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
-              // style={styles.floatingButton}
-              onPress={() => {
-                router.push('/step1');
-              }}>
-              <Ionicons name="add" size={24} color="white" />
-            </TouchableOpacity>
-          </View> */}
-          <BottomSheet
-            ref={bottomSheetRef}
-            index={open ? 1 : -1}
-            snapPoints={[200, '50%', '100%']}
-            enablePanDownToClose={true}
-            onChange={handleSheetChange}>
-            <BottomSheetView
-              style={{
-                flex: 1,
-                alignItems: 'center',
-              }}>
-              <Text className="mb-4 text-2xl font-semibold text-primary">
-                All done🎉 Review and Submit
-              </Text>
-
-              <BottomSheetView
+      <View className="flex-1 bg-white">
+        <View
+          className="px-6 pb-6 pt-16 "
+          style={{
+            backgroundColor: colors.primary,
+          }}>
+          <Animated.View className={'flex-row items-center justify-between'}>
+            <View>
+              <View className="flex-row items-end gap-2">
+                <Text
+                  style={{
+                    fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+                  }}
+                  className="text-lg font-semibold text-white">
+                  Hello
+                </Text>
+                <Ionicons name="hand-right-outline" size={24} color="white" />
+              </View>
+              <Text
                 style={{
-                  width: '100%',
-                  paddingHorizontal: 15,
-                  paddingBottom: 15,
-                  flexDirection: 'column',
-                  justifyContent: 'space-evenly',
-                  flexGrow: 1,
-                }}>
-                <Text className="mb-4 text-xl font-semibold text-primary">{'Title'}</Text>
-                <Text className="mb-4 text-xl font-semibold text-primary">Description</Text>
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+                }}
+                className="text-lg font-semibold text-white">
+                {user?.firstName} {user?.lastName}
+              </Text>
+            </View>
+            <View>
+              <Pressable onPress={handleLogout}>
+                <MaterialCommunityIcons name="logout" size={24} color="white" />
+              </Pressable>
+            </View>
+          </Animated.View>
 
-                <Text className="mb-4 text-xl font-semibold text-primary">Price</Text>
-                <Text className="mb-4 text-xl font-semibold text-primary"></Text>
-              </BottomSheetView>
-            </BottomSheetView>
-          </BottomSheet>
-        </Container>
-      </>
-    );
-  }
-  return (
-    <>
-      <Stack.Screen options={{ title: 'Events' }} />
-      <Container>
-        <ScrollView>
-          <View className="h-full flex-col justify-between gap-4 px-6 pb-10  pt-14">
-            <Text className="text-xl font-normal text-primary">Trending</Text>
-            <FlatList
-              refreshing={true}
-              data={events}
-              renderItem={({ item }) => (
-                <View className="flex flex-col rounded-md">
-                  <Image
-                    source={{ uri: item.photos[0]?.url }}
-                    className="aspect-video  rounded-lg "
-                    style={{ width: 300, height: 200, borderRadius: 12 }}
-                  />
-                  <View className="absolute left-2 top-40 px-3">
-                    <Text className="text-xl font-semibold text-white">{item.title}</Text>
-                    <View className="flex w-full flex-1 flex-row items-center gap-2">
-                      <Text className="text-sm font-semibold text-white">
-                        {new Date(item.createdAt as string).toDateString()}
-                      </Text>
-                      <Text className="text-sm font-semibold text-white">{item.location.name}</Text>
-                      <View className=" justify-between rounded-full bg-primary px-2 py-1 text-xs font-semibold">
-                        <Text className="text-sm font-semibold text-white">KSH {item.price}</Text>
-                      </View>
+          {/* Search Bar */}
+          <Pressable>
+            <View className="mt-4 flex-row items-center rounded-2xl bg-white/20 p-4">
+              <MaterialCommunityIcons name="magnify" size={24} color="white" />
+              <Text
+                className="ml-2 text-white"
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+                }}>
+                What event do you want to attend?
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+        <ScrollView className="flex-1 gap-4 bg-white">
+          <Animated.View
+            className={'gap-6'}
+            entering={FadeInDown.duration(500).delay(200).springify()}>
+            <View className="flex-row items-center justify-between px-6 pt-4">
+              <Text
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+                }}
+                className="px-6 py-4 text-xl font-normal text-primary">
+                Categories
+              </Text>
+            </View>
+
+            {/* categories */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 pl-4">
+              {event_categories.map((category) => (
+                <View key={category.id} className="">
+                  <Pressable
+                    onPress={() => setSelectedCategory(category.name)}
+                    className="mr-4 flex-col items-center gap-4 rounded-full p-2">
+                    <View
+                      className={`flex-row items-center rounded-full p-4 ${
+                        selectedCategory === category.name
+                          ? 'border-2 border-primary'
+                          : 'border border-gray-400'
+                      } `}>
+                      <Ionicons
+                        name="checkmark"
+                        size={24}
+                        color={selectedCategory === category.name ? colors.primary : 'gray'}
+                      />
                     </View>
-                  </View>
+                    <Text
+                      style={{
+                        fontFamily:
+                          Platform.OS === 'ios'
+                            ? selectedCategory === category.name
+                              ? 'BarlowBold'
+                              : 'BarlowMedium'
+                            : selectedCategory === category.name
+                              ? 'Barlow_700Bold'
+                              : 'Barlow_500Medium',
+                      }}
+                      className="text-sm font-semibold text-primary">
+                      {category.name}
+                    </Text>
+                  </Pressable>
                 </View>
-              )}
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{
-                justifyContent: 'space-between',
-                flexDirection: 'row',
-                gap: 10,
-                // paddingHorizontal: 15,
-              }}
-            />
-            <Text className="text-xl font-normal text-primary">Best For You</Text>
-            <View style={{ flex: 1 }}>
-              <FlatList
-                data={events}
-                renderItem={({ item }) => (
-                  <Pressable onPress={() => router.push('/details/' + item.id)}>
+              ))}
+            </ScrollView>
+          </Animated.View>
+
+          {/* Events */}
+          {isLoading2 ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size={'large'} color={colors.primary} />
+            </View>
+          ) : error2 ? (
+            <Text>Error: {error2.message}</Text>
+          ) : dt2 && dt2?.length > 0 ? (
+            <FlatList
+              data={dt2}
+              renderItem={({ item, index }) => (
+                <Pressable onPress={() => router.push('/details/' + item.id)}>
+                  <Animated.View
+                    entering={FadeInDown.duration(100)
+                      .delay(index * 300)
+                      .springify()}
+                    className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
                     <Image
                       source={{ uri: item.photos[0]?.url }}
-                      className="aspect-video  rounded-lg "
-                      style={{ width: 300, height: 200, borderRadius: 12 }}
+                      className="aspect-video  "
+                      style={{ width: 200, height: 200 }}
                     />
-                    <View className="absolute left-2 top-40 px-3">
+                    <View className="absolute left-2 top-40 p-2 px-3">
                       <Text className="text-xl font-semibold text-white">{item.title}</Text>
                       <View className="flex w-full flex-1 flex-row items-center gap-2">
                         <Text className="text-sm font-semibold text-white">
@@ -281,25 +495,30 @@ export default function Home() {
                         </View>
                       </View>
                     </View>
-                  </Pressable>
-                )}
-                scrollEnabled={false}
-                contentContainerStyle={{
-                  justifyContent: 'space-between',
-                  flexDirection: 'column',
-                  gap: 10,
-                  // paddingHorizontal: 15,
-                }}
-              />
-            </View>
-            <TouchableOpacity
-              className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
-              // style={styles.floatingButton}
-              onPress={handleOpenSheet}>
-              <Ionicons name="add" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
+                  </Animated.View>
+                </Pressable>
+              )}
+              scrollEnabled={false}
+              className="w-full"
+              contentContainerStyle={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexDirection: 'column',
+                gap: 10,
+                // paddingHorizontal: 15,
+              }}
+            />
+          ) : (
+            <Text>No events found</Text>
+          )}
         </ScrollView>
+
+        <TouchableOpacity
+          className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
+          // style={styles.floatingButton}
+          onPress={handleOpenSheet}>
+          <Ionicons name="add" size={24} color="white" />
+        </TouchableOpacity>
         <BottomSheet
           ref={bottomSheetRef}
           index={open ? 1 : -1}
@@ -414,7 +633,282 @@ export default function Home() {
             </KeyboardAvoidingView>
           </BottomSheetScrollView>
         </BottomSheet>
-      </Container>
-    </>
+      </View>
+    );
+  }
+  return (
+    <View className="flex-1 bg-white">
+      <View
+        className="px-6 pb-6 pt-16 "
+        style={{
+          backgroundColor: colors.primary,
+        }}>
+        <Animated.View className={'flex-row items-center justify-between'}>
+          <View>
+            <View className="flex-row items-end gap-2">
+              <Text
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+                }}
+                className="text-lg font-semibold text-white">
+                Hello
+              </Text>
+              <Ionicons name="hand-right-outline" size={24} color="white" />
+            </View>
+            <Text
+              style={{
+                fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+              }}
+              className="text-lg font-semibold text-white">
+              {user?.firstName} {user?.lastName}
+            </Text>
+          </View>
+          <View>
+            <Pressable onPress={handleLogout}>
+              <MaterialCommunityIcons name="logout" size={24} color="white" />
+            </Pressable>
+          </View>
+        </Animated.View>
+
+        {/* Search Bar */}
+        <Pressable>
+          <View className="mt-4 flex-row items-center rounded-2xl bg-white/20 p-4">
+            <MaterialCommunityIcons name="magnify" size={24} color="white" />
+            <Text
+              className="ml-2 text-white"
+              style={{
+                fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+              }}>
+              What event do you want to attend?
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+      <ScrollView className="flex-1 gap-4 bg-white">
+        <Animated.View
+          className={'gap-6'}
+          entering={FadeInDown.duration(500).delay(200).springify()}>
+          <View className="flex-row items-center justify-between px-6 pt-4">
+            <Text
+              style={{
+                fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+              }}
+              className="px-6 py-4 text-xl font-normal text-primary">
+              Categories
+            </Text>
+          </View>
+
+          {/* categories */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 pl-4">
+            {event_categories.map((category) => (
+              <View key={category.id} className="">
+                <Pressable
+                  onPress={() => setSelectedCategory(category.name)}
+                  className="mr-4 flex-col items-center gap-4 rounded-full p-2">
+                  <View
+                    className={`flex-row items-center rounded-full p-4 ${
+                      selectedCategory === category.name
+                        ? 'border-2 border-primary'
+                        : 'border border-gray-400'
+                    } `}>
+                    <Ionicons
+                      name="checkmark"
+                      size={24}
+                      color={selectedCategory === category.name ? colors.primary : 'gray'}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      fontFamily:
+                        Platform.OS === 'ios'
+                          ? selectedCategory === category.name
+                            ? 'BarlowBold'
+                            : 'BarlowMedium'
+                          : selectedCategory === category.name
+                            ? 'Barlow_700Bold'
+                            : 'Barlow_500Medium',
+                    }}
+                    className="text-sm font-semibold text-primary">
+                    {category.name}
+                  </Text>
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        </Animated.View>
+
+        {/* Events */}
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size={'large'} color={colors.primary} />
+          </View>
+        ) : error ? (
+          <Text>Error: {error.message}</Text>
+        ) : dt && dt?.length > 0 ? (
+          <FlatList
+            data={dt}
+            renderItem={({ item, index }) => (
+              <Pressable onPress={() => router.push('/details/' + item.id)}>
+                <Animated.View
+                  entering={FadeInDown.duration(100)
+                    .delay(index * 300)
+                    .springify()}
+                  className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
+                  <Image
+                    source={{ uri: item.photos[0]?.url }}
+                    className="aspect-video  "
+                    style={{ width: 200, height: 200 }}
+                  />
+                  <View className="absolute left-2 top-40 p-2 px-3">
+                    <Text className="text-xl font-semibold text-white">{item.title}</Text>
+                    <View className="flex w-full flex-1 flex-row items-center gap-2">
+                      <Text className="text-sm font-semibold text-white">
+                        {new Date(item.createdAt as string).toDateString()}
+                      </Text>
+                      <Text className="text-sm font-semibold text-white">{item.location.name}</Text>
+                      <View className=" justify-between rounded-full bg-primary px-2 py-1 text-xs font-semibold">
+                        <Text className="text-sm font-semibold text-white">KSH {item.price}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </Animated.View>
+              </Pressable>
+            )}
+            scrollEnabled={false}
+            className="w-full"
+            contentContainerStyle={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexDirection: 'column',
+              gap: 10,
+              // paddingHorizontal: 15,
+            }}
+          />
+        ) : (
+          <Text>No events found</Text>
+        )}
+      </ScrollView>
+
+      <TouchableOpacity
+        className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
+        // style={styles.floatingButton}
+        onPress={handleOpenSheet}>
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={open ? 1 : -1}
+        snapPoints={[200, '50%', '90%']}
+        enablePanDownToClose={true}
+        onChange={handleSheetChange}>
+        <BottomSheetView style={{ paddingHorizontal: 15 }}>
+          <Text className=" text-center text-xl font-semibold text-primary">
+            Create A New Event
+          </Text>
+          <Text
+            className={` my-1.5 text-base font-normal`}
+            style={{
+              color: '#1A1A1A',
+            }}>
+            Event Location
+            <Text style={{ color: colors.error }}>*</Text>
+          </Text>
+
+          <GooglePlacesAutocomplete
+            placeholder="Search for a place"
+            fetchDetails={true}
+            onPress={(data, details = null) => {
+              if (details) {
+                onPlaceSelected(details);
+              }
+            }}
+            query={{
+              key: 'AIzaSyDu1dCOYnqv0rYLW23fxYwyuupnMxvga-M',
+              language: 'en',
+            }}
+            styles={{
+              listView: { backgroundColor: 'white' },
+              textInput: { color: 'black' },
+              textInputContainer: {
+                paddingLeft: 10,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: '#A1A5AC',
+                backgroundColor: 'white',
+              },
+              container: {
+                width: '100%',
+                flex: 0,
+              },
+            }}
+          />
+        </BottomSheetView>
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 15,
+          }}>
+          <KeyboardAvoidingView behavior={'padding'} className="flex flex-1 flex-col ">
+            <Text
+              className={`  text-base font-normal`}
+              style={{
+                color: '#1A1A1A',
+              }}>
+              Please upload an image as your event theme ...
+              <Text style={{ color: colors.error }}>*</Text>
+            </Text>
+            <Pressable onPress={pickImage}>
+              <Image
+                source={{
+                  uri:
+                    data.photos[0]?.url ||
+                    'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
+                }}
+                className=" aspect-video   rounded-lg"
+                style={{
+                  width: 300,
+                  height: 200,
+                  borderRadius: 12,
+                }}
+              />
+            </Pressable>
+            <Input
+              label="Event Title"
+              value={data.title}
+              onChangeText={(text) => setData({ ...data, title: text })}
+              placeholder="Enter the title of your event"
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
+            <Input
+              label="Event Description"
+              value={data.description}
+              onChangeText={(text) => setData({ ...data, description: text })}
+              placeholder="Enter the details about your event"
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
+            <Input
+              label="Event Category"
+              value={data.categories ? data.categories[0] : ''}
+              onChangeText={(text) => setData({ ...data, categories: [text] })}
+              placeholder="Enter the categories of your event"
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
+
+            <Input
+              label="Event Price"
+              value={Number(data.price).toString()}
+              onChangeText={(text) =>
+                setData({ ...data, price: !isNaN(parseFloat(text)) ? parseFloat(text) : 0 })
+              }
+              keyboardType="numeric"
+              placeholder="Enter the price of your event"
+            />
+            <Button title="Submit" className="mt-4" onPress={handleCreateEvent} />
+          </KeyboardAvoidingView>
+        </BottomSheetScrollView>
+      </BottomSheet>
+    </View>
   );
 }

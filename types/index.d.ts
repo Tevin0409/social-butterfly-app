@@ -80,3 +80,10 @@ declare type EventInfo = {
     lastName: string;
   };
 };
+
+declare type Category = {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+};

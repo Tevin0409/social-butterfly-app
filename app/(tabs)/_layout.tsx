@@ -23,6 +23,7 @@ export default function TabLayout() {
           name="two"
           options={{
             title: 'My Events',
+            tabBarLabel: 'My Events',
             tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
           }}
         />
@@ -30,6 +31,7 @@ export default function TabLayout() {
           name="ticket"
           options={{
             title: 'Bookings',
+            tabBarLabel: 'RSVPs',
             tabBarIcon: ({ color }) => <TabBarIcon name="ticket" color={color} />,
           }}
         />

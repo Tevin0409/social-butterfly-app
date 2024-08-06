@@ -1,6 +1,7 @@
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
@@ -14,24 +15,49 @@ import { colors } from '~/theme/colors';
 export default function DetailsScreen() {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [details, setDetails] = useState<EventInfo | null>(null);
   const [open, setOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const mapRef = useRef<MapView>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [hasBooked, setHasBooked] = useState(false);
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ['fetch-event-details', id],
+    queryFn: () => fetchEventDetails(id as string),
+    enabled: true,
+  });
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      const details = await fetchEventDetails(id as string);
-      console.log('details', details);
-      setDetails(details);
-    };
-    fetchDetails();
-  }, [id]);
+    if (data === undefined) {
+      refetch();
+    } else {
+      setDetails(data);
+      console.log('details', data.bookings);
+    }
+    // const fetchDetails = async () => {
+    //   const details = await fetchEventDetails(id as string);
+    //   console.log('details', details);
+    //   setDetails(details);
+    // };
+    // fetchDetails();
+  }, [id, data]);
+
+  useEffect(() => {
+    const hasBooked =
+      user?.id === data?.eventInfo.eventCreatedById ||
+      hasUserBooked(user?.id as string, data?.bookings as Booking[]);
+    setHasBooked(hasBooked);
+  }, [data, user]);
+
+  const router = useRouter();
 
   const handleSheetChange = (index: number) => {
     setOpen(index !== 1);
+  };
+
+  const hasUserBooked = (userId: string, bookings: Booking[]): boolean => {
+    return bookings.some((booking) => booking.user.id === userId);
   };
 
   if (details === null) {
@@ -76,7 +102,7 @@ export default function DetailsScreen() {
     }
   };
   return (
-    <Container>
+    <View>
       <View
         style={{
           width: '100%',
@@ -136,9 +162,17 @@ export default function DetailsScreen() {
               }}>
               Participants
             </Text>
-            <Text className=" text-center text-xl font-semibold text-primary">
-              {details?.bookings.length}
-            </Text>
+            {details?.eventInfo.eventCreatedById === user?.id ? (
+              <Pressable onPress={() => router.push(`/details/participants/${id}`)}>
+                <Text className=" text-center text-xl font-semibold text-primary">
+                  {details?.bookings.length}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text className=" text-center text-xl font-semibold text-primary">
+                {details?.bookings.length}
+              </Text>
+            )}
           </View>
         </BottomSheetView>
         <BottomSheetScrollView
@@ -202,12 +236,16 @@ export default function DetailsScreen() {
                 title={details?.eventInfo.location.name || 'Marker'}
               />
             </MapView>
-            <Button title="Buy Ticket" className="mt-4" onPress={handleBookNow} />
+            {hasBooked ? (
+              <Button title="Chat" className="mt-4" onPress={() => console.log('chat')} />
+            ) : (
+              <Button title="RSVP" className="mt-4" onPress={handleBookNow} />
+            )}
           </BottomSheetView>
         </BottomSheetScrollView>
         {/* </LinearGradient> */}
       </BottomSheet>
-    </Container>
+    </View>
   );
 }
 

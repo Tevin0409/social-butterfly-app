@@ -1,8 +1,7 @@
-import { View, Text, Image, Pressable, Button, Alert, Platform } from 'react-native';
+import { View, Text, Image, Pressable, Button, Alert, Platform, SafeAreaView } from 'react-native';
 import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '~/theme/colors';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button as Btn } from '~/components/Button';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';

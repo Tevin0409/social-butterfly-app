@@ -147,3 +147,54 @@ export const bookEvent = async (
 
   return response.json();
 };
+
+export const fetchAllCategories = async (): Promise<Category[]> => {
+  console.log('fetchAllCategories', BASE_URL);
+  const response = await fetch(`${BASE_URL}/events/fetch-categories`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.log('error', error);
+    if (error.errorCode) {
+      throw error;
+    }
+    if (error.errorCode && error.errorCode !== 3001) {
+      throw error;
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+
+  return response.json();
+};
+
+// New function to fetch events by category
+export const fetchEventsByCategory = async (category: string): Promise<SocialEvent[]> => {
+  console.log('fetchEventsByCategory', BASE_URL);
+  const response = await fetch(`${BASE_URL}/events/fetch-events/category/${category}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.log('error', error);
+    if (error.errorCode) {
+      throw error;
+    }
+    if (error.errorCode && error.errorCode !== 3001) {
+      throw error;
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+
+  return response.json();
+};

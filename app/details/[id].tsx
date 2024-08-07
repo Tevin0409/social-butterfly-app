@@ -1,14 +1,13 @@
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useQuery } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import MapView, { Marker } from 'react-native-maps';
 import Toast from 'react-native-root-toast';
 import { bookEvent, fetchEventDetails } from '~/actions/event.actions';
 import { Button } from '~/components/Button';
-import { Container } from '~/components/Container';
 import { useAuthStore } from '~/store/auth-store';
 import { colors } from '~/theme/colors';
 
@@ -33,7 +32,6 @@ export default function DetailsScreen() {
       refetch();
     } else {
       setDetails(data);
-      console.log('details', data.bookings);
     }
     // const fetchDetails = async () => {
     //   const details = await fetchEventDetails(id as string);
@@ -44,20 +42,34 @@ export default function DetailsScreen() {
   }, [id, data]);
 
   useEffect(() => {
+    console.log('details', details);
     const hasBooked =
       user?.id === data?.eventInfo.eventCreatedById ||
-      hasUserBooked(user?.id as string, data?.bookings as Booking[]);
+      hasUserBooked(user?.id as string, details?.bookings as Booking[]);
     setHasBooked(hasBooked);
-  }, [data, user]);
+    console.log('hasBooked', hasUserBooked(user?.id as string, details?.bookings as Booking[]));
+  }, [details]);
 
   const router = useRouter();
+  const blurhash =
+    '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
   const handleSheetChange = (index: number) => {
     setOpen(index !== 1);
   };
 
   const hasUserBooked = (userId: string, bookings: Booking[]): boolean => {
-    return bookings.some((booking) => booking.user.id === userId);
+    if (bookings) {
+      console.log('bookings', bookings);
+      const check = bookings.filter((booking) => booking.user.id === userId);
+      if (check.length > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+    // return bookings.some((booking) => booking.user.id === userId);
   };
 
   if (details === null) {
@@ -75,30 +87,13 @@ export default function DetailsScreen() {
       const result = await bookEvent(id as string, 'booked', token!);
       console.log('result', result);
 
-      // setUser((res as AuthResponse).userInfo, (res as AuthResponse).token);
-      // router.replace('/home');
+      refetch();
     } catch (error) {
       Toast.show('Booking Event Failed');
       console.log('error', error);
 
       const errorResponse = error as ErrorResponse;
       Toast.show(errorResponse.message);
-      // if (errorResponse.errors) {
-      //   // Parse and set error messages
-      //   const issues = errorResponse.errors.issues;
-      //   const newErrors: Partial<Record<'email' | 'password', string>> = {};
-      //   issues.forEach((issue) => {
-      //     const field = issue.path[0] as 'email' | 'password';
-      //     newErrors[field] = issue.message;
-      //   });
-      //   setErrors(newErrors);
-      // } else {
-      //   if ((error as ErrorResponse).errorCode) {
-      //     Toast.show((error as ErrorResponse).message);
-      //   } else {
-      //     Toast.show('Something went wrong');
-      //   }
-      // }
     }
   };
   return (
@@ -110,7 +105,7 @@ export default function DetailsScreen() {
           backgroundColor: colors.primaryBg,
         }}>
         {/* {console.log('detailsssss', details.eventInfo.photos)} */}
-        <Image
+        {/* <Image
           source={{ uri: details?.eventInfo.photos[0].url }}
           style={[
             StyleSheet.absoluteFillObject,
@@ -118,6 +113,18 @@ export default function DetailsScreen() {
               borderRadius: 10,
             },
           ]}
+        /> */}
+        <ExpoImage
+          source={details?.eventInfo.photos[0].url}
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              borderRadius: 10,
+            },
+          ]}
+          placeholder={{ blurhash }}
+          contentFit="cover"
+          priority={'high'}
         />
         <View className="absolute  left-2 top-72">
           <Text className="text-xl font-semibold text-white">{details?.eventInfo.title}</Text>
@@ -133,12 +140,11 @@ export default function DetailsScreen() {
       </View>
       <BottomSheet
         ref={bottomSheetRef}
-        index={open ? 1 : 1}
+        index={1}
         handleStyle={{
           backgroundColor: colors.white,
         }}
-        detached={true}
-        snapPoints={['55%', '70%']}
+        snapPoints={['40%', '55%', '70%']}
         onChange={handleSheetChange}>
         {/* <LinearGradient style={{ flex: 1 }} colors={[colors.primaryBg, colors.secondary]}> */}
         <BottomSheetView
@@ -162,7 +168,7 @@ export default function DetailsScreen() {
               }}>
               Participants
             </Text>
-            {details?.eventInfo.eventCreatedById === user?.id ? (
+            {details?.ownerInfo.id === user?.id ? (
               <Pressable onPress={() => router.push(`/details/participants/${id}`)}>
                 <Text className=" text-center text-xl font-semibold text-primary">
                   {details?.bookings.length}
@@ -236,11 +242,15 @@ export default function DetailsScreen() {
                 title={details?.eventInfo.location.name || 'Marker'}
               />
             </MapView>
-            {hasBooked ? (
-              <Button title="Chat" className="mt-4" onPress={() => console.log('chat')} />
-            ) : (
-              <Button title="RSVP" className="mt-4" onPress={handleBookNow} />
+            {/* <Button title="RSVP" className="mt-4" onPress={handleBookNow} /> */}
+            {hasBooked && (
+              <Button
+                title="Chat"
+                className="mt-4"
+                onPress={() => router.push(`/details/chat/${id}`)}
+              />
             )}
+            {!hasBooked && <Button title="RSVP" className="mt-4" onPress={handleBookNow} />}
           </BottomSheetView>
         </BottomSheetScrollView>
         {/* </LinearGradient> */}

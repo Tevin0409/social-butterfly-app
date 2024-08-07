@@ -9,7 +9,7 @@ interface AuthResponse {
 export const createEvent = async (
   event: SocialEvent,
   token: string
-): Promise<AuthResponse | ErrorResponse> => {
+): Promise<CreateEventResponse | ErrorResponse> => {
   console.log('event', BASE_URL);
   const response = await fetch(`${BASE_URL}/events/create-event`, {
     method: 'POST',
@@ -177,6 +177,31 @@ export const fetchAllCategories = async (): Promise<Category[]> => {
 export const fetchEventsByCategory = async (category: string): Promise<SocialEvent[]> => {
   console.log('fetchEventsByCategory', BASE_URL);
   const response = await fetch(`${BASE_URL}/events/fetch-events/category/${category}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.log('error', error);
+    if (error.errorCode) {
+      throw error;
+    }
+    if (error.errorCode && error.errorCode !== 3001) {
+      throw error;
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+
+  return response.json();
+};
+
+export const fetchAttendants = async (eventId: string): Promise<User[]> => {
+  console.log('fetchAttendants', BASE_URL);
+  const response = await fetch(`${BASE_URL}/events/fetch-attendees/${eventId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

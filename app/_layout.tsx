@@ -2,6 +2,7 @@ import '../global.css';
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import {
+  Barlow_400Regular,
   Barlow_500Medium,
   Barlow_600SemiBold,
   Barlow_700Bold,
@@ -34,6 +35,7 @@ export default function RootLayout() {
     BarlowExtraBold: require('../assets/fonts/Barlow-ExtraBold.ttf'),
     BarlowMedium: require('../assets/fonts/Barlow-Medium.ttf'),
     Barlow_500Medium,
+    Barlow_400Regular,
     Barlow_700Bold,
     Barlow_800ExtraBold,
     Barlow_600SemiBold,
@@ -88,17 +90,13 @@ export default function RootLayout() {
             <Stack.Screen
               name="details/participants/[eid]"
               options={{
-                headerTransparent: true,
-                title: 'Participants',
-                headerTitleAlign: 'center',
-
-                headerLeft: () => (
-                  <Pressable onPress={() => router.back()}>
-                    <Text style={{ fontSize: 18, textAlign: 'center', color: colors.primary }}>
-                      Back
-                    </Text>
-                  </Pressable>
-                ),
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="details/chat/[eid]"
+              options={{
+                headerShown: false,
               }}
             />
           </Stack>

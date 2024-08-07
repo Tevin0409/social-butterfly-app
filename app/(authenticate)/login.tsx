@@ -30,6 +30,7 @@ const Login = () => {
       Toast.show('Logging in...');
       const res = await loginUser(email, password);
       Toast.show(res.message);
+      console.log('login res', res);
 
       setUser((res as AuthResponse).userInfo, (res as AuthResponse).token);
       router.replace('/(tabs)');

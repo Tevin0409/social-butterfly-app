@@ -1,5 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,11 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { Cloudinary } from '@cloudinary/url-gen';
 import { upload } from 'cloudinary-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,15 +21,12 @@ import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bot
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-import { Container } from '~/components/Container';
 import {
   createEvent,
   fetchAllEvents,
   fetchAllCategories,
   fetchEventsByCategory,
 } from '~/actions/event.actions';
-import { styles } from '~/components/HeaderButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import Input from '~/components/TextInput';
 import { useEventForm } from '~/hooks/EventFormContext';
 import { useAuthStore } from '~/store/auth-store';
@@ -35,19 +34,19 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { colors } from '~/theme/colors';
 import Toast from 'react-native-root-toast';
 import { Button } from '~/components/Button';
-import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
+import EventsMap from '~/components/EventsMap';
 
 export default function Home() {
   const router = useRouter();
   const { data, setData } = useEventForm();
   const { user, token } = useAuthStore();
-  const [events, setEvents] = useState<SocialEvent[]>([]);
   const [event_categories, set_event_categories] = useState<Category[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-
+  const [refreshing, setRefreshing] = useState(false);
+  const [isMapView, setIsMapView] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const {
@@ -60,17 +59,6 @@ export default function Home() {
     queryFn: () => fetchAllCategories(),
     enabled: true,
   });
-
-  // const {
-  //   data: eventsByCategory,
-  //   error: eventsByCategoryError,
-  //   isLoading: eventsByCategoryIsLoading,
-  //   refetch: refetchEventsByCategory,
-  // } = useQuery({
-  //   queryKey: ['fetch-events-by-category'],
-  //   queryFn: ({ category }) => fetchEventsByCategory(category),
-  //   enabled: true,
-  // });
 
   const {
     data: dt,
@@ -93,8 +81,18 @@ export default function Home() {
     queryFn: () => fetchAllEvents(),
     enabled: true,
   });
-
-  console.log('dt', dt);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setSelectedCategory('');
+    refetchCategories();
+    refetch();
+    refetch2();
+    // Add your refresh logic here, for example, fetching new data
+    // Once the data is fetched, set refreshing to false
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
 
   const handleLogout = async () => {
     await AsyncStorage.clear();
@@ -149,10 +147,27 @@ export default function Home() {
       console.log('data', data);
       const res = await createEvent(data, token!);
       console.log('res', res);
-      Toast.show(res.message);
+      if (res as CreateEventResponse) {
+        Toast.show(res.message);
+        setSelectedCategory('');
+        refetch();
+        refetch2();
+        refetchCategories();
+        setData(() => ({
+          location: { latitude: 0, longitude: 0, name: '' },
+          mapData: { latitude: 0, longitude: 0, latitudeDelta: 0.0475, longitudeDelta: 0.0245 },
+          title: '',
+          description: '',
+          categories: [],
+          price: 0,
+          photos: [],
+          eventCreatedById: '',
+        }));
+        bottomSheetRef.current?.snapToIndex(-1);
+        setOpen(false);
+      }
 
-      // setUser((res as AuthResponse).userInfo, (res as AuthResponse).token);
-      // router.replace('/home');
+      // bottomSheetRef.current?.snapToIndex(-1);
     } catch (error) {
       Toast.show('Creating Event Failed');
       console.log('error', error);
@@ -213,6 +228,9 @@ export default function Home() {
       },
     });
   };
+
+  const blurhash =
+    '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
   useEffect(() => {
     if (categories) {
@@ -358,6 +376,7 @@ export default function Home() {
   //   );
   // }
   if (dt2 && dt === undefined) {
+    console.log('dt2', dt2);
     return (
       <View className="flex-1 bg-white">
         <View
@@ -406,7 +425,9 @@ export default function Home() {
             </View>
           </Pressable>
         </View>
-        <ScrollView className="flex-1 gap-4 bg-white">
+        <ScrollView
+          className="flex-1 gap-4 bg-white"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           <Animated.View
             className={'gap-6'}
             entering={FadeInDown.duration(500).delay(200).springify()}>
@@ -418,6 +439,13 @@ export default function Home() {
                 className="px-6 py-4 text-xl font-normal text-primary">
                 Categories
               </Text>
+
+              <Pressable
+                className={`flex-row items-center gap-2 rounded-lg ${isMapView ? 'bg-tertiary' : 'bg-primary'} p-2`}
+                onPress={() => setIsMapView(!isMapView)}>
+                <Text className="text-sm font-semibold text-white">Map View</Text>
+                <Ionicons name="globe" size={24} color={colors.white} />
+              </Pressable>
             </View>
 
             {/* categories */}
@@ -466,7 +494,7 @@ export default function Home() {
             </View>
           ) : error2 ? (
             <Text>Error: {error2.message}</Text>
-          ) : dt2 && dt2?.length > 0 ? (
+          ) : !isMapView && dt2 && dt2?.length > 0 ? (
             <FlatList
               data={dt2}
               renderItem={({ item, index }) => (
@@ -476,10 +504,17 @@ export default function Home() {
                       .delay(index * 300)
                       .springify()}
                     className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
-                    <Image
-                      source={{ uri: item.photos[0]?.url }}
-                      className="aspect-video  "
-                      style={{ width: 200, height: 200 }}
+                    {/* <Image
+                    source={{ uri: item.photos[0]?.url }}
+                    className="aspect-video  "
+                    style={{ width: 200, height: 200 }}
+                  /> */}
+                    <ExpoImage
+                      // className="aspect-video"
+                      source={item.photos[0]?.url}
+                      placeholder={{ blurhash }}
+                      contentFit="cover"
+                      style={{ width: 300, height: 200, aspectRatio: 16 / 9 }}
                     />
                     <View className="absolute left-2 top-40 p-2 px-3">
                       <Text className="text-xl font-semibold text-white">{item.title}</Text>
@@ -507,7 +542,10 @@ export default function Home() {
                 gap: 10,
                 // paddingHorizontal: 15,
               }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             />
+          ) : isMapView ? (
+            <EventsMap events={dt2 ? dt2 : []} />
           ) : (
             <Text>No events found</Text>
           )}
@@ -636,6 +674,7 @@ export default function Home() {
       </View>
     );
   }
+  console.log('dt', dt);
   return (
     <View className="flex-1 bg-white">
       <View
@@ -684,7 +723,10 @@ export default function Home() {
           </View>
         </Pressable>
       </View>
-      <ScrollView className="flex-1 gap-4 bg-white">
+
+      <ScrollView
+        className="flex-1 gap-4 bg-white"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Animated.View
           className={'gap-6'}
           entering={FadeInDown.duration(500).delay(200).springify()}>
@@ -696,6 +738,12 @@ export default function Home() {
               className="px-6 py-4 text-xl font-normal text-primary">
               Categories
             </Text>
+            <Pressable
+              className={`flex-row items-center gap-2 rounded-lg ${isMapView ? 'bg-tertiary' : 'bg-primary'} p-2`}
+              onPress={() => setIsMapView(!isMapView)}>
+              <Text className="text-sm font-semibold text-white">Map View</Text>
+              <Ionicons name="globe" size={24} color={colors.white} />
+            </Pressable>
           </View>
 
           {/* categories */}
@@ -742,9 +790,9 @@ export default function Home() {
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size={'large'} color={colors.primary} />
           </View>
-        ) : error ? (
+        ) : error && !isMapView ? (
           <Text>Error: {error.message}</Text>
-        ) : dt && dt?.length > 0 ? (
+        ) : !isMapView && dt && dt?.length > 0 ? (
           <FlatList
             data={dt}
             renderItem={({ item, index }) => (
@@ -754,10 +802,17 @@ export default function Home() {
                     .delay(index * 300)
                     .springify()}
                   className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
-                  <Image
+                  {/* <Image
                     source={{ uri: item.photos[0]?.url }}
                     className="aspect-video  "
                     style={{ width: 200, height: 200 }}
+                  /> */}
+                  <ExpoImage
+                    // className="aspect-video"
+                    source={item.photos[0]?.url}
+                    placeholder={{ blurhash }}
+                    contentFit="cover"
+                    style={{ width: 300, height: 200, aspectRatio: 16 / 9 }}
                   />
                   <View className="absolute left-2 top-40 p-2 px-3">
                     <Text className="text-xl font-semibold text-white">{item.title}</Text>
@@ -783,7 +838,14 @@ export default function Home() {
               gap: 10,
               // paddingHorizontal: 15,
             }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           />
+        ) : isMapView ? (
+          <Animated.View
+            entering={FadeInDown.duration(300).delay(200).springify()}
+            className="items-center justify-center rounded-lg">
+            <EventsMap events={dt ? dt : []} />
+          </Animated.View>
         ) : (
           <Text>No events found</Text>
         )}
@@ -874,7 +936,9 @@ export default function Home() {
             <Input
               label="Event Title"
               value={data.title}
-              onChangeText={(text) => setData({ ...data, title: text })}
+              onChangeText={(text) =>
+                setData({ ...data, title: text, eventCreatedById: user!.id! })
+              }
               placeholder="Enter the title of your event"
               // errorMessage={errors.email}
               // onClearError={() => clearError('email')}

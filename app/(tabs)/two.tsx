@@ -1,26 +1,23 @@
 import { Stack, useRouter } from 'expo-router';
 import React, { useRef, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Cloudinary } from '@cloudinary/url-gen';
 import { upload } from 'cloudinary-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 import { Container } from '~/components/Container';
 import { createEvent, fetchAllEvents, fetchMyEvents } from '~/actions/event.actions';
-import { styles } from '~/components/HeaderButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import Input from '~/components/TextInput';
 import { useEventForm } from '~/hooks/EventFormContext';
 import { useAuthStore } from '~/store/auth-store';
@@ -28,6 +25,8 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { colors } from '~/theme/colors';
 import Toast from 'react-native-root-toast';
 import { Button } from '~/components/Button';
+import { useQuery } from '@tanstack/react-query';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function Home() {
   const router = useRouter();
@@ -39,10 +38,16 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const handleLogout = async () => {
-    await AsyncStorage.clear();
-    router.push('/');
-  };
+  const {
+    data: dt,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['fetch-my-events'],
+    queryFn: () => fetchMyEvents(token!),
+    enabled: true,
+  });
 
   const handleSheetChange = (index: number) => {
     setOpen(index !== -1);
@@ -223,167 +228,204 @@ export default function Home() {
     );
   }
   return (
-    <>
-      <Stack.Screen options={{ title: 'Events' }} />
-      <Container>
-        <ScrollView>
-          <View className="h-full flex-col justify-between gap-4 px-6 pb-10  pt-14">
-            <Text className="text-xl font-normal text-primary">My Events</Text>
+    <View className="flex-1 bg-white">
+      <View
+        className="px-6 pb-6 pt-16 "
+        style={{
+          backgroundColor: colors.primary,
+        }}>
+        <Animated.View className={'flex-row items-center justify-between'}>
+          <View>
+            {/* <View className="flex-row items-end gap-2">
+              <Text
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+                }}
+                className="text-lg font-semibold text-white">
+                Hello
+              </Text>
+              <Ionicons name="hand-right-outline" size={24} color="white" />
+            </View> */}
+            <Text
+              style={{
+                fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+              }}
+              className="text-lg font-semibold text-white">
+              My Events
+            </Text>
+          </View>
+        </Animated.View>
 
-            <View style={{ flex: 1 }}>
-              <FlatList
-                data={events}
-                renderItem={({ item }) => (
-                  <Pressable onPress={() => handleEditPress(item)}>
-                    <Image
-                      source={{ uri: item.photos[0]?.url }}
-                      className="aspect-video  rounded-lg "
-                      style={{ width: 300, height: 200, borderRadius: 12 }}
-                    />
-                    <View className="absolute left-2 top-40 px-3">
-                      <Text className="text-xl font-semibold text-white">{item.title}</Text>
-                      <View className="flex w-full flex-1 flex-row items-center gap-2">
-                        <Text className="text-sm font-semibold text-white">
-                          {new Date(item.createdAt as string).toDateString()}
-                        </Text>
-                        <Text className="text-sm font-semibold text-white">
-                          {item.location.name}
-                        </Text>
-                        <View className=" justify-between rounded-full bg-primary px-2 py-1 text-xs font-semibold">
-                          <Text className="text-sm font-semibold text-white">KSH {item.price}</Text>
-                        </View>
+        {/* Search Bar */}
+      </View>
+      <ScrollView className="flex-1 gap-4 bg-white">
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size={'large'} color={colors.primary} />
+          </View>
+        ) : error ? (
+          <Text>Error: {error.message}</Text>
+        ) : dt && dt?.length > 0 ? (
+          <FlatList
+            data={dt}
+            renderItem={({ item, index }) => (
+              <Pressable onPress={() => handleEditPress(item)}>
+                <Animated.View
+                  entering={FadeInDown.duration(100)
+                    .delay(index * 300)
+                    .springify()}
+                  className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
+                  <Image
+                    source={{ uri: item.photos[0]?.url }}
+                    className="aspect-video  "
+                    style={{ width: 200, height: 200 }}
+                  />
+                  <View className="absolute left-2 top-40 p-2 px-3">
+                    <Text className="text-xl font-semibold text-white">{item.title}</Text>
+                    <View className="flex w-full flex-1 flex-row items-center gap-2">
+                      <Text className="text-sm font-semibold text-white">
+                        {new Date(item.createdAt as string).toDateString()}
+                      </Text>
+                      <Text className="text-sm font-semibold text-white">{item.location.name}</Text>
+                      <View className=" justify-between rounded-full bg-primary px-2 py-1 text-xs font-semibold">
+                        <Text className="text-sm font-semibold text-white">KSH {item.price}</Text>
                       </View>
                     </View>
-                  </Pressable>
-                )}
-                scrollEnabled={false}
-                contentContainerStyle={{
-                  justifyContent: 'space-between',
-                  flexDirection: 'column',
-                  gap: 10,
-                  // paddingHorizontal: 15,
-                }}
-              />
-            </View>
-          </View>
-        </ScrollView>
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={open ? 1 : -1}
-          snapPoints={[200, '50%', '90%']}
-          enablePanDownToClose={true}
-          onChange={handleSheetChange}>
-          <BottomSheetView style={{ paddingHorizontal: 15 }}>
-            <Text className=" text-center text-xl font-semibold text-primary">Edit Event</Text>
+                  </View>
+                </Animated.View>
+              </Pressable>
+            )}
+            scrollEnabled={false}
+            className="w-full"
+            contentContainerStyle={{
+              paddingTop: 10,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexDirection: 'column',
+              gap: 10,
+              // paddingHorizontal: 15,
+            }}
+          />
+        ) : (
+          <Text>No events found</Text>
+        )}
+      </ScrollView>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={open ? 1 : -1}
+        snapPoints={[200, '50%', '90%']}
+        enablePanDownToClose={true}
+        onChange={handleSheetChange}>
+        <BottomSheetView style={{ paddingHorizontal: 15 }}>
+          <Text className=" text-center text-xl font-semibold text-primary">Edit Event</Text>
+          <Text
+            className={` my-1.5 text-base font-normal`}
+            style={{
+              color: '#1A1A1A',
+            }}>
+            Event Location
+            <Text style={{ color: colors.error }}>*</Text>
+          </Text>
+
+          <GooglePlacesAutocomplete
+            placeholder="Search for a place"
+            fetchDetails={true}
+            onPress={(data, details = null) => {
+              if (details) {
+                onPlaceSelected(details);
+              }
+            }}
+            query={{
+              key: 'AIzaSyDu1dCOYnqv0rYLW23fxYwyuupnMxvga-M',
+              language: 'en',
+            }}
+            styles={{
+              listView: { backgroundColor: 'white' },
+              textInput: { color: 'black' },
+              textInputContainer: {
+                paddingLeft: 10,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: '#A1A5AC',
+                backgroundColor: 'white',
+              },
+              container: {
+                width: '100%',
+                flex: 0,
+              },
+            }}
+          />
+        </BottomSheetView>
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 15,
+          }}>
+          <KeyboardAvoidingView behavior={'padding'} className="flex flex-1 flex-col ">
             <Text
-              className={` my-1.5 text-base font-normal`}
+              className={`  text-base font-normal`}
               style={{
                 color: '#1A1A1A',
               }}>
-              Event Location
+              Please upload an image as your event theme ...
               <Text style={{ color: colors.error }}>*</Text>
             </Text>
-
-            <GooglePlacesAutocomplete
-              placeholder="Search for a place"
-              fetchDetails={true}
-              onPress={(data, details = null) => {
-                if (details) {
-                  onPlaceSelected(details);
-                }
-              }}
-              query={{
-                key: 'AIzaSyDu1dCOYnqv0rYLW23fxYwyuupnMxvga-M',
-                language: 'en',
-              }}
-              styles={{
-                listView: { backgroundColor: 'white' },
-                textInput: { color: 'black' },
-                textInputContainer: {
-                  paddingLeft: 10,
-                  borderRadius: 10,
-                  borderWidth: 1.5,
-                  borderColor: '#A1A5AC',
-                  backgroundColor: 'white',
-                },
-                container: {
-                  width: '100%',
-                  flex: 0,
-                },
-              }}
-            />
-          </BottomSheetView>
-          <BottomSheetScrollView
-            contentContainerStyle={{
-              paddingHorizontal: 15,
-            }}>
-            <KeyboardAvoidingView behavior={'padding'} className="flex flex-1 flex-col ">
-              <Text
-                className={`  text-base font-normal`}
+            <Pressable onPress={pickImage}>
+              <Image
+                source={{
+                  uri:
+                    selectedEvent?.photos[0]?.url ||
+                    'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
+                }}
+                className=" aspect-video   rounded-lg"
                 style={{
-                  color: '#1A1A1A',
-                }}>
-                Please upload an image as your event theme ...
-                <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-              <Pressable onPress={pickImage}>
-                <Image
-                  source={{
-                    uri:
-                      selectedEvent?.photos[0]?.url ||
-                      'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
-                  }}
-                  className=" aspect-video   rounded-lg"
-                  style={{
-                    width: 300,
-                    height: 200,
-                    borderRadius: 12,
-                  }}
-                />
-              </Pressable>
-              <Input
-                label="Event Title"
-                value={data.title.length > 0 ? data.title : selectedEvent?.title}
-                onChangeText={(text) => setData({ ...data, title: text })}
-                placeholder={'Enter the title of your event'}
-                // errorMessage={errors.email}
-                // onClearError={() => clearError('email')}
+                  width: 300,
+                  height: 200,
+                  borderRadius: 12,
+                }}
               />
-              <Input
-                label="Event Description"
-                value={data.description.length > 0 ? data.description : selectedEvent?.description}
-                onChangeText={(text) => setData({ ...data, description: text })}
-                placeholder={'Enter the details about your event'}
-                // errorMessage={errors.email}
-                // onClearError={() => clearError('email')}
-              />
-              <Input
-                label="Event Category"
-                value={data.categories ? data.categories[0] : selectedEvent?.categories[0]}
-                onChangeText={(text) => setData({ ...data, categories: [text] })}
-                placeholder={'Enter the categories of your event'}
-                // errorMessage={errors.email}
-                // onClearError={() => clearError('email')}
-              />
+            </Pressable>
+            <Input
+              label="Event Title"
+              value={data.title.length > 0 ? data.title : selectedEvent?.title}
+              onChangeText={(text) => setData({ ...data, title: text })}
+              placeholder={'Enter the title of your event'}
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
+            <Input
+              label="Event Description"
+              value={data.description.length > 0 ? data.description : selectedEvent?.description}
+              onChangeText={(text) => setData({ ...data, description: text })}
+              placeholder={'Enter the details about your event'}
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
+            <Input
+              label="Event Category"
+              value={data.categories ? data.categories[0] : selectedEvent?.categories[0]}
+              onChangeText={(text) => setData({ ...data, categories: [text] })}
+              placeholder={'Enter the categories of your event'}
+              // errorMessage={errors.email}
+              // onClearError={() => clearError('email')}
+            />
 
-              <Input
-                label="Event Price"
-                value={
-                  Number(data.price).toString() !== 'NaN'
-                    ? Number(data.price).toString()
-                    : selectedEvent?.price.toString()
-                }
-                onChangeText={(text) =>
-                  setData({ ...data, price: !isNaN(parseFloat(text)) ? parseFloat(text) : 0 })
-                }
-                keyboardType="numeric"
-                placeholder={'Enter the price of your event'}
-              />
-              <Button title="Submit" className="mt-4" onPress={handleCreateEvent} />
-            </KeyboardAvoidingView>
-          </BottomSheetScrollView>
-        </BottomSheet>
-      </Container>
-    </>
+            <Input
+              label="Event Price"
+              value={
+                Number(data.price).toString() !== 'NaN'
+                  ? Number(data.price).toString()
+                  : selectedEvent?.price.toString()
+              }
+              onChangeText={(text) =>
+                setData({ ...data, price: !isNaN(parseFloat(text)) ? parseFloat(text) : 0 })
+              }
+              keyboardType="numeric"
+              placeholder={'Enter the price of your event'}
+            />
+            <Button title="Submit" className="mt-4" onPress={handleCreateEvent} />
+          </KeyboardAvoidingView>
+        </BottomSheetScrollView>
+      </BottomSheet>
+    </View>
   );
 }

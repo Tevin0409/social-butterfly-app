@@ -75,6 +75,7 @@ declare type EventInfo = {
   bookings: Booking[];
   eventInfo: SocialEvent;
   ownerInfo: {
+    id: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -86,4 +87,19 @@ declare type Category = {
   name: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+declare type Message = {
+  chatRoomId: string;
+  content: string;
+  createdAt: string;
+  id: string;
+  userId: string;
+  user: User;
+};
+
+declare type CreateEventResponse = {
+  statusCode: number;
+  message: string;
+  event: SocialEvent;
 };

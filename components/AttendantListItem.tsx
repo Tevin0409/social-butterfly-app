@@ -7,7 +7,7 @@ const AttendantListItem = ({ user }: { user: User }) => {
   console.log('user', user);
   return (
     <View style={styles.container}>
-      <Ionicons name="person-circle" size={24} color={colors.primary} />
+      <Ionicons name="person-circle" size={35} color={colors.primary} />
       <Text style={styles.name}>
         {user.firstName} {user.lastName}
       </Text>
@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     width: '100%',
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
   name: {

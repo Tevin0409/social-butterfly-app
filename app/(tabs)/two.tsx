@@ -1,5 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -15,9 +15,10 @@ import { Cloudinary } from '@cloudinary/url-gen';
 import { upload } from 'cloudinary-react-native';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import * as ImagePicker from 'expo-image-picker';
+import { Image as ExpoImage } from 'expo-image';
 
 import { Container } from '~/components/Container';
-import { createEvent, fetchAllEvents, fetchMyEvents } from '~/actions/event.actions';
+import { createEvent, fetchMyEvents } from '~/actions/event.actions';
 import Input from '~/components/TextInput';
 import { useEventForm } from '~/hooks/EventFormContext';
 import { useAuthStore } from '~/store/auth-store';
@@ -27,16 +28,19 @@ import Toast from 'react-native-root-toast';
 import { Button } from '~/components/Button';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 export default function Home() {
   const router = useRouter();
   const { data, setData } = useEventForm();
   const { user, token } = useAuthStore();
-  const [events, setEvents] = useState<SocialEvent[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<SocialEvent | null>(null);
 
   const [open, setOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const blurhash =
+    '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
   const {
     data: dt,
@@ -57,6 +61,16 @@ export default function Home() {
     bottomSheetRef.current?.snapToIndex(1);
     setOpen(true);
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    refetch();
+    // Add your refresh logic here, for example, fetching new data
+    // Once the data is fetched, set refreshing to false
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
 
   const onPlaceSelected = (details: any) => {
     const { lat, lng } = details.geometry.location;
@@ -167,15 +181,7 @@ export default function Home() {
     handleOpenSheet();
   };
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const response = await fetchMyEvents(token!);
-      console.log('response', response);
-      setEvents(response);
-    };
-    fetchEvents();
-  }, []);
-  if (events.length === 0 || events === undefined) {
+  if (dt === undefined || dt.length === 0) {
     return (
       <>
         <Stack.Screen options={{ title: 'Events' }} />
@@ -258,7 +264,9 @@ export default function Home() {
 
         {/* Search Bar */}
       </View>
-      <ScrollView className="flex-1 gap-4 bg-white">
+      <ScrollView
+        className="flex-1 gap-4 bg-white"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size={'large'} color={colors.primary} />
@@ -275,11 +283,14 @@ export default function Home() {
                     .delay(index * 300)
                     .springify()}
                   className={'w-full gap-2 overflow-hidden rounded-2xl border border-gray-200'}>
-                  <Image
-                    source={{ uri: item.photos[0]?.url }}
-                    className="aspect-video  "
-                    style={{ width: 200, height: 200 }}
+                  <ExpoImage
+                    // className="aspect-video"
+                    source={item.photos[0]?.url}
+                    placeholder={{ blurhash }}
+                    contentFit="cover"
+                    style={{ width: 300, height: 200, aspectRatio: 16 / 9 }}
                   />
+
                   <View className="absolute left-2 top-40 p-2 px-3">
                     <Text className="text-xl font-semibold text-white">{item.title}</Text>
                     <View className="flex w-full flex-1 flex-row items-center gap-2">
@@ -331,6 +342,8 @@ export default function Home() {
             placeholder="Search for a place"
             fetchDetails={true}
             onPress={(data, details = null) => {
+              console.log('details', details);
+              console.log('data', data);
               if (details) {
                 onPlaceSelected(details);
               }
@@ -370,18 +383,15 @@ export default function Home() {
               <Text style={{ color: colors.error }}>*</Text>
             </Text>
             <Pressable onPress={pickImage}>
-              <Image
-                source={{
-                  uri:
-                    selectedEvent?.photos[0]?.url ||
-                    'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
-                }}
-                className=" aspect-video   rounded-lg"
-                style={{
-                  width: 300,
-                  height: 200,
-                  borderRadius: 12,
-                }}
+              <ExpoImage
+                // className="aspect-video"
+                source={
+                  selectedEvent?.photos[0]?.url ||
+                  'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996'
+                }
+                placeholder={{ blurhash }}
+                contentFit="cover"
+                style={{ borderRadius: 12, width: 300, height: 200, aspectRatio: 16 / 9 }}
               />
             </Pressable>
             <Input

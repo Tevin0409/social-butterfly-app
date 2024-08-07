@@ -919,18 +919,15 @@ export default function Home() {
               <Text style={{ color: colors.error }}>*</Text>
             </Text>
             <Pressable onPress={pickImage}>
-              <Image
-                source={{
-                  uri:
-                    data.photos[0]?.url ||
-                    'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996',
-                }}
-                className=" aspect-video   rounded-lg"
-                style={{
-                  width: 300,
-                  height: 200,
-                  borderRadius: 12,
-                }}
+              <ExpoImage
+                // className="aspect-video"
+                source={
+                  data.photos[0]?.url ||
+                  'https://img.freepik.com/free-vector/image-upload-concept-landing-page_23-2148309693.jpg?t=st=1722459767~exp=1722463367~hmac=4fc84d96721eb7724ab239d593eca102d7911e42a3eae4255b0cdec45d082fee&w=996'
+                }
+                placeholder={{ blurhash }}
+                contentFit="cover"
+                style={{ width: 300, height: 200, aspectRatio: 16 / 9 }}
               />
             </Pressable>
             <Input

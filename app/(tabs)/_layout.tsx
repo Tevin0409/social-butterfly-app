@@ -31,7 +31,7 @@ export default function TabLayout() {
           name="ticket"
           options={{
             title: 'Bookings',
-            tabBarLabel: 'RSVPs',
+            tabBarLabel: 'My RSVPs',
             tabBarIcon: ({ color }) => <TabBarIcon name="ticket" color={color} />,
           }}
         />

@@ -70,6 +70,7 @@ declare type Booking = {
   createdAt: string;
   updatedAt: string;
   user: User;
+  event?: SocialEvent;
 };
 declare type EventInfo = {
   bookings: Booking[];

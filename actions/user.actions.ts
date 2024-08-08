@@ -19,6 +19,8 @@ export const signup = async (
     body: JSON.stringify({ ...user, password }),
   });
 
+  console.log('response', response);
+
   if (!response.ok) {
     const error = await response.json();
     if (error.errorCode === 3001) {
@@ -45,6 +47,7 @@ export const login = async (email: string, password: string): Promise<AuthRespon
     body: JSON.stringify({ email, password }),
   });
 
+  console.log('response', response);
   if (!response.ok) {
     const error = await response.json();
     if (error.errorCode === 3001) {

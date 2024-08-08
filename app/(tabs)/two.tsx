@@ -72,6 +72,10 @@ export default function Home() {
     }, 2000);
   }, []);
 
+  useEffect(() => {
+    refetch();
+  }, [dt]);
+
   const onPlaceSelected = (details: any) => {
     const { lat, lng } = details.geometry.location;
     const newRegion = {
@@ -183,54 +187,40 @@ export default function Home() {
 
   if (dt === undefined || dt.length === 0) {
     return (
-      <>
-        <Stack.Screen options={{ title: 'Events' }} />
-        <Container>
-          {/* <View className="h-full flex-col justify-between gap-4 px-6 pb-3 pt-14">
-            <Text>You have no Events</Text>
-            <TouchableOpacity
-              className=" absolute bottom-5 right-5 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg"
-              // style={styles.floatingButton}
-              onPress={() => {
-                router.push('/step1');
-              }}>
-              <Ionicons name="add" size={24} color="white" />
-            </TouchableOpacity>
-          </View> */}
-          <BottomSheet
-            ref={bottomSheetRef}
-            index={open ? 1 : -1}
-            snapPoints={[200, '50%', '100%']}
-            enablePanDownToClose={true}
-            onChange={handleSheetChange}>
-            <BottomSheetView
-              style={{
-                flex: 1,
-                alignItems: 'center',
-              }}>
-              <Text className="mb-4 text-2xl font-semibold text-primary">
-                All done🎉 Review and Submit
-              </Text>
-
-              <BottomSheetView
+      <View className="flex-1 bg-white">
+        <View
+          className="px-6 pb-6 pt-16 "
+          style={{
+            backgroundColor: colors.primary,
+          }}>
+          <Animated.View className={'flex-row items-center justify-between'}>
+            <View>
+              {/* <View className="flex-row items-end gap-2">
+              <Text
                 style={{
-                  width: '100%',
-                  paddingHorizontal: 15,
-                  paddingBottom: 15,
-                  flexDirection: 'column',
-                  justifyContent: 'space-evenly',
-                  flexGrow: 1,
-                }}>
-                <Text className="mb-4 text-xl font-semibold text-primary">{'Title'}</Text>
-                <Text className="mb-4 text-xl font-semibold text-primary">Description</Text>
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowMedium' : 'Barlow_500Medium',
+                }}
+                className="text-lg font-semibold text-white">
+                Hello
+              </Text>
+              <Ionicons name="hand-right-outline" size={24} color="white" />
+            </View> */}
+              <Text
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'BarlowBold' : 'Barlow_700Bold',
+                }}
+                className="text-lg font-semibold text-white">
+                My Events
+              </Text>
+            </View>
+          </Animated.View>
 
-                <Text className="mb-4 text-xl font-semibold text-primary">Price</Text>
-                <Text className="mb-4 text-xl font-semibold text-primary"></Text>
-              </BottomSheetView>
-            </BottomSheetView>
-          </BottomSheet>
-        </Container>
-      </>
+          {/* Search Bar */}
+        </View>
+        <View className="flex-grow flex-col items-center justify-center">
+          <Text className="text-2xl font-semibold text-primary">You have no Events</Text>
+        </View>
+      </View>
     );
   }
   return (

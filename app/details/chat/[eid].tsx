@@ -8,6 +8,7 @@ import {
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
+  StatusBar,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '~/store/auth-store';
@@ -26,8 +27,8 @@ const Chat = () => {
   const router = useRouter();
   const [textMessage, setTextMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://192.168.1.8:5000/api';
-  const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.1.8:5000';
+  const SOCKET_URL =
+    process.env.EXPO_PUBLIC_SOCKET_URL || 'https://final-socialbutterfly-backend.onrender.com';
   const socket = io(SOCKET_URL, {
     auth: {
       token: token!,
@@ -92,6 +93,8 @@ const Chat = () => {
 
         backgroundColor: '#fff',
       }}>
+      <StatusBar barStyle={'default'} />
+
       <View
         style={{
           flexDirection: 'row',
@@ -151,7 +154,7 @@ logout
                 item.user.email === user?.email
                   ? {
                       alignSelf: 'flex-end',
-                      backgroundColor: 'green',
+                      backgroundColor: colors.primary,
                       padding: 8,
                       maxWidth: '60%',
                       borderRadius: 8,
@@ -159,7 +162,7 @@ logout
                     }
                   : {
                       alignSelf: 'flex-start',
-                      backgroundColor: colors.primary,
+                      backgroundColor: colors.primaryColorGrey,
                       padding: 8,
                       maxWidth: '60%',
                       borderRadius: 8,
@@ -177,7 +180,7 @@ logout
                           Platform.OS === 'ios' ? 'Barlow-SemiBold' : 'Barlow_600SemiBold',
                       }
                     : {
-                        color: 'white',
+                        color: 'black',
                         fontSize: 10,
                         textAlign: 'left',
                         fontFamily:
@@ -197,7 +200,7 @@ logout
                           Platform.OS === 'ios' ? 'Barlow-SemiBold' : 'Barlow_600SemiBold',
                       }
                     : {
-                        color: 'white',
+                        color: 'black',
                         fontSize: 16,
                         textAlign: 'left',
                         fontFamily:
@@ -210,14 +213,14 @@ logout
                 style={[
                   item.user.email === user?.email
                     ? {
-                        color: 'gray',
+                        color: 'white',
                         fontSize: 10,
                         textAlign: 'right',
                         fontFamily:
                           Platform.OS === 'ios' ? 'Barlow-SemiBold' : 'Barlow_600SemiBold',
                       }
                     : {
-                        color: 'white',
+                        color: 'black',
                         fontSize: 10,
                         textAlign: 'right',
                         fontFamily:

@@ -153,6 +153,7 @@ export default function Home() {
         refetch();
         refetch2();
         refetchCategories();
+        bottomSheetRef.current?.snapToIndex(-1);
         setData(() => ({
           location: { latitude: 0, longitude: 0, name: '' },
           mapData: { latitude: 0, longitude: 0, latitudeDelta: 0.0475, longitudeDelta: 0.0245 },
@@ -163,7 +164,7 @@ export default function Home() {
           photos: [],
           eventCreatedById: '',
         }));
-        bottomSheetRef.current?.snapToIndex(-1);
+
         setOpen(false);
       }
 
@@ -636,7 +637,9 @@ export default function Home() {
               <Input
                 label="Event Title"
                 value={data.title}
-                onChangeText={(text) => setData({ ...data, title: text })}
+                onChangeText={(text) =>
+                  setData({ ...data, title: text, eventCreatedById: user!.id! })
+                }
                 placeholder="Enter the title of your event"
                 // errorMessage={errors.email}
                 // onClearError={() => clearError('email')}

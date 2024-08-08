@@ -1,4 +1,5 @@
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://192.168.1.6:5000/api';
+const BASE_URL =
+  process.env.EXPO_PUBLIC_BASE_URL || 'https://final-socialbutterfly-backend.onrender.com/api';
 export const sendMessage = async ({
   token,
   eventId,

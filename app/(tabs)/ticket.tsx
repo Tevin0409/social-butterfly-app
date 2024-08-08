@@ -136,7 +136,7 @@ export default function Ticket() {
               width: '100%',
             }}>
             <QRCode
-              value={`${bookingDetails?.id} - ${bookingDetails?.status}`}
+              value={`${bookingDetails?.user.firstName} ${bookingDetails?.user.lastName} - ${bookingDetails?.id} - ${bookingDetails?.status}`}
               size={150}
               color={colors.primary}
             />

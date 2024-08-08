@@ -1,4 +1,5 @@
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://192.168.1.6:5000/api';
+const BASE_URL =
+  process.env.EXPO_PUBLIC_BASE_URL || 'https://final-socialbutterfly-backend.onrender.com/api';
 export const fetchBookingById = async (bookingId: string): Promise<Booking> => {
   const response = await fetch(`${BASE_URL}/booking/fetch-booking/${bookingId}`, {
     method: 'GET',
